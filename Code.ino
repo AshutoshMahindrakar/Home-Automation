@@ -1,6 +1,6 @@
-#define BLYNK_TEMPLATE_ID "TMPL3BmL-l5jM"
+#define BLYNK_TEMPLATE_ID "TEMPLATE_ID"
 #define BLYNK_TEMPLATE_NAME "Home automation"
-#define BLYNK_AUTH_TOKEN "4GrnbW34ph4XKNtAoKWbefdnpJbdOJ19"
+#define BLYNK_AUTH_TOKEN "AUTH_TOKEN"
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -8,8 +8,8 @@
 #include <DHT.h>
 
 // WiFi credentials
-char ssid[] = "Mahindrakar";
-char pass[] = "Mahindrakar@0023";
+char ssid[] = "WIFI Name";
+char pass[] = "WIFI Password";
 
 char auth[] = BLYNK_AUTH_TOKEN;
 
