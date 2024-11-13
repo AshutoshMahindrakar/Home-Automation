@@ -14,9 +14,9 @@ char pass[] = "WIFI Password";
 char auth[] = BLYNK_AUTH_TOKEN;
 
 // DHT11 Sensor
-#define DHT_PIN D6
-#define DHT_TYPE DHT11
-DHT dht(DHT_PIN, DHT_TYPE);
+#define DHTPIN D5
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
 
 // Light and Fan pins
 #define LIGHT_PIN D2
@@ -25,6 +25,7 @@ DHT dht(DHT_PIN, DHT_TYPE);
 // Fan mode and state
 bool fanAuto = false;
 int fanState;
+int fanMode;
 
 void setup() {
   Serial.begin(115200);
@@ -48,11 +49,12 @@ void loop() {
   Blynk.run();
   checkWiFi(); // Check WiFi connection
 
-  // Read temperature only if in auto mode
+  // Only read temperature and humidity if in auto mode
   if (fanAuto) {
       float temperature = dht.readTemperature();
       float humidity = dht.readHumidity();
 
+    // Check for failed readings
     if (isnan(temperature) || isnan(humidity)) {
       Serial.println("Failed to read from DHT sensor!");
       delay(2000); // Wait before retrying
@@ -63,18 +65,25 @@ void loop() {
       Serial.print(" °C, Humidity: ");
       Serial.print(humidity);
       Serial.println(" %");
-
-            // Send data to Blynk Virtual Pins
+      
+      // Send data to Blynk Virtual Pins
       Blynk.virtualWrite(V3, temperature);
       Blynk.virtualWrite(V4, humidity);
     }
 
     // Fan automatic mode logic
-    if (temperature > 25) {
+    if (temperature > 30) {
       digitalWrite(FAN_PIN, HIGH); // Turn on fan
     } else {
       digitalWrite(FAN_PIN, LOW); // Turn off fan
     }
+  }
+
+  // If the fan is in manual mode, don't send the temperature/humidity data
+  else {
+    // When fan is in manual mode, don't send data or send zero values (optional)
+    Blynk.virtualWrite(V3, 0);
+    Blynk.virtualWrite(V4, 0);
   }
 
   delay(1000); // Adjust delay as needed
@@ -95,22 +104,30 @@ BLYNK_WRITE(V0) {
 }
 
 BLYNK_WRITE(V1) {
-  fanState = param.asInt(); // Read the state of the fan
-  digitalWrite(FAN_PIN, fanState); // Turn on/off the fan
-  fanAuto = false; // Set fan to manual mode when controlled via V1
+  fanState = param.asInt();
+  if (fanMode == 0) {
+    if (fanState == 1) {
+      digitalWrite(FAN_PIN, HIGH);
+    } else {
+      digitalWrite(FAN_PIN, LOW);
+    }
+  }  
 }
 
 BLYNK_WRITE(V2) {
-  int fanMode = param.asInt(); // Read the fan mode
+  int fanMode = param.asInt();
   if (fanMode == 1) {
-    digitalWrite(FAN_PIN, LOW);
-    fanAuto = true; // Set to auto mode
-  } else {
-    fanAuto = false; // Set to manual mode
-    if (fanState == 1){
-      digitalWrite(FAN_PIN, HIGH);
+    fanAuto = true;
+    if (fanState == 1) {
+      digitalWrite(FAN_PIN, LOW);
     }
-    else {
+  }
+
+  else {
+    fanAuto = false; 
+    if (fanState == 1) {
+      digitalWrite(FAN_PIN, HIGH);
+    } else {
       digitalWrite(FAN_PIN, LOW);
     }
   }
